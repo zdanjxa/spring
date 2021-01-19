@@ -56,6 +56,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 
 /**
+ * 负责创建 SqlSessionFactory 对象
  * {@code FactoryBean} that creates an MyBatis {@code SqlSessionFactory}.
  * This is the usual way to set up a shared MyBatis {@code SqlSessionFactory} in a Spring application context;
  * the SqlSessionFactory can then be passed to MyBatis-based DAOs via dependency injection.
@@ -377,7 +378,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     state((configuration == null && configLocation == null) || !(configuration != null && configLocation != null),
               "Property 'configuration' and 'configLocation' can not specified with together");
 
-    this.sqlSessionFactory = buildSqlSessionFactory();
+    this.sqlSessionFactory = buildSqlSessionFactory();//后置处理创建sqlSessionFactory
   }
 
   /**
@@ -395,17 +396,17 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     Configuration configuration;
 
     XMLConfigBuilder xmlConfigBuilder = null;
-    if (this.configuration != null) {
+    if (this.configuration != null) {//如果已存在配置
       configuration = this.configuration;
       if (configuration.getVariables() == null) {
         configuration.setVariables(this.configurationProperties);
       } else if (this.configurationProperties != null) {
         configuration.getVariables().putAll(this.configurationProperties);
       }
-    } else if (this.configLocation != null) {
+    } else if (this.configLocation != null) {//根据本地xml文件流创建xmlConfigBuilder，并获取配置
       xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
       configuration = xmlConfigBuilder.getConfiguration();
-    } else {
+    } else {//使用默认配置
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("Property 'configuration' or 'configLocation' not specified, using default MyBatis Configuration");
       }
@@ -427,7 +428,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       configuration.setVfsImpl(this.vfs);
     }
 
-    if (hasLength(this.typeAliasesPackage)) {
+    if (hasLength(this.typeAliasesPackage)) {//对类型别名包扫描
       String[] typeAliasPackageArray = tokenizeToStringArray(this.typeAliasesPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
       for (String packageToScan : typeAliasPackageArray) {
@@ -439,7 +440,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (!isEmpty(this.typeAliases)) {
+    if (!isEmpty(this.typeAliases)) {//对类型别名类扫描
       for (Class<?> typeAlias : this.typeAliases) {
         configuration.getTypeAliasRegistry().registerAlias(typeAlias);
         if (LOGGER.isDebugEnabled()) {
@@ -448,7 +449,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (!isEmpty(this.plugins)) {
+    if (!isEmpty(this.plugins)) {//插件添加
       for (Interceptor plugin : this.plugins) {
         configuration.addInterceptor(plugin);
         if (LOGGER.isDebugEnabled()) {
@@ -457,7 +458,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (hasLength(this.typeHandlersPackage)) {
+    if (hasLength(this.typeHandlersPackage)) {//对类型处理包扫描
       String[] typeHandlersPackageArray = tokenizeToStringArray(this.typeHandlersPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
       for (String packageToScan : typeHandlersPackageArray) {
@@ -468,7 +469,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (!isEmpty(this.typeHandlers)) {
+    if (!isEmpty(this.typeHandlers)) {//对类型处理类进行扫描
       for (TypeHandler<?> typeHandler : this.typeHandlers) {
         configuration.getTypeHandlerRegistry().register(typeHandler);
         if (LOGGER.isDebugEnabled()) {
@@ -489,7 +490,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       configuration.addCache(this.cache);
     }
 
-    if (xmlConfigBuilder != null) {
+    if (xmlConfigBuilder != null) {//如果是文件流读取的则解析xml配置
       try {
         xmlConfigBuilder.parse();
 
@@ -503,13 +504,13 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (this.transactionFactory == null) {
+    if (this.transactionFactory == null) {//事务工厂
       this.transactionFactory = new SpringManagedTransactionFactory();
     }
 
     configuration.setEnvironment(new Environment(this.environment, this.transactionFactory, this.dataSource));
 
-    if (!isEmpty(this.mapperLocations)) {
+    if (!isEmpty(this.mapperLocations)) {//扫描 Mapper XML 文件，并进行解析
       for (Resource mapperLocation : this.mapperLocations) {
         if (mapperLocation == null) {
           continue;
@@ -543,7 +544,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    */
   @Override
   public SqlSessionFactory getObject() throws Exception {
-    if (this.sqlSessionFactory == null) {
+    if (this.sqlSessionFactory == null) {//判空保证sqlSessionFactory的初始化,此处理论上不会为null
       afterPropertiesSet();
     }
 
