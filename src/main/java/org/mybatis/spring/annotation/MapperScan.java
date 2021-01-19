@@ -28,6 +28,7 @@ import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.context.annotation.Import;
 
 /**
+ * 指定需要扫描的包，将包中符合的 Mapper 接口，注册成 beanClass 为 MapperFactoryBean 的 BeanDefinition 对象，从而实现创建 Mapper 对象
  * Use this annotation to register MyBatis mapper interfaces when using Java
  * Config. It performs when same work as {@link MapperScannerConfigurer} via
  * {@link MapperScannerRegistrar}.

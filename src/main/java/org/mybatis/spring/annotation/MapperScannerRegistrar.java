@@ -33,6 +33,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * @MapperScann 的注册器，负责将扫描到的 Mapper 接口，注册成 beanClass 为 MapperFactoryBean 的 BeanDefinition 对象，从而实现创建 Mapper 对象
  * A {@link ImportBeanDefinitionRegistrar} to allow annotation configuration of
  * MyBatis mapper scanning. Using an @Enable annotation allows beans to be
  * registered via @Component configuration, whereas implementing
@@ -54,14 +55,17 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
    */
   @Override
   public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-
+    //获取 @MapperScann 注解的属性信息
     AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(MapperScan.class.getName()));
+    //类路径扫描器
     ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry);
 
     // this check is needed in Spring 3.1
     if (resourceLoader != null) {
       scanner.setResourceLoader(resourceLoader);
     }
+
+    //解析各种注解属性信息
 
     Class<? extends Annotation> annotationClass = annoAttrs.getClass("annotationClass");
     if (!Annotation.class.equals(annotationClass)) {
@@ -86,6 +90,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
     scanner.setSqlSessionTemplateBeanName(annoAttrs.getString("sqlSessionTemplateRef"));
     scanner.setSqlSessionFactoryBeanName(annoAttrs.getString("sqlSessionFactoryRef"));
 
+    //添加被扫描的包
     List<String> basePackages = new ArrayList<String>();
     for (String pkg : annoAttrs.getStringArray("value")) {
       if (StringUtils.hasText(pkg)) {
@@ -100,7 +105,9 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
     for (Class<?> clazz : annoAttrs.getClassArray("basePackageClasses")) {
       basePackages.add(ClassUtils.getPackageName(clazz));
     }
+    //注册扫描器的过滤器
     scanner.registerFilters();
+    //执行扫描
     scanner.doScan(StringUtils.toStringArray(basePackages));
   }
 

@@ -24,6 +24,7 @@ import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.beans.factory.FactoryBean;
 
 /**
+ * 是最终Mapper的代理类
  * BeanFactory that enables injection of MyBatis mapper interfaces. It can be set up with a
  * SqlSessionFactory or a pre-configured SqlSessionTemplate.
  * <p>
